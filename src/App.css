@@ -27,15 +27,20 @@
 .form__container {
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .form__label {
   font-size: 0.8rem;
-  color: var(--Smokey-grey);
   font-weight: 700;
+  color: var(--Smokey-grey);
   text-transform: uppercase;
   margin-bottom: 6px;
   line-height: 1;
+}
+
+.color-erro {
+  color: var(--Light-red);
 }
 
 .form__input {
@@ -52,17 +57,34 @@
   -moz-appearance: textfield;
   cursor: pointer;
 
-  &:hover:is(:not(:focus)) {
+  &:hover:is(:not(:focus):not(.border-erro)) {
     border-color: var(--Purple);
   }
 
-  &:focus {
+  &:focus:is(:not(.border-erro)) {
     outline: 1px solid var(--Purple);
   }
 
   @media (min-width: 52.5rem) {
     font-size: 1.5rem;
   }
+}
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+.border-erro {
+  outline: none;
+  border-color: var(--Light-red);
+}
+
+.form__span__erro {
+  color: var(--Light-red);
+  font-size: 0.875rem;
+  font-style: italic;
+  position: absolute;
+  bottom: -25px;
 }
 
 .form__button {

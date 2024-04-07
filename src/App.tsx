@@ -1,28 +1,39 @@
-import './App.css'
+import { useState } from 'react'
+
 import Form from './Form/Form'
 
+import './App.css'
+
 function App() {
+  const [calculatedDay, setCalculatedDay] = useState(0)
+  const [calculatedMonth, setCalculatedMonth] = useState(0)
+  const [calculatedYear, setCalculatedYear] = useState(0)
+
   return (
     <>
       <div className="card">
         <header className="header">
-          <Form />
+          <Form
+            setCalculatedDay={setCalculatedDay}
+            setCalculatedMonth={setCalculatedMonth}
+            setCalculatedYear={setCalculatedYear}
+          />
         </header>
 
         <main>
           <div>
             <p className="main__p">
-              <span>- -</span> years
+              <span>{calculatedYear ? calculatedYear : '- -'}</span> years
             </p>
           </div>
           <div>
             <p className="main__p">
-              <span>- -</span> months
+              <span>{calculatedMonth ? calculatedMonth : '- -'}</span> months
             </p>
           </div>
           <div>
             <p className="main__p">
-              <span>- -</span> days
+              <span>{calculatedDay ? calculatedDay : '- -'}</span> days
             </p>
           </div>
         </main>
