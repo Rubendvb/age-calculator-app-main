@@ -1,5 +1,8 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import moment from 'moment'
+
+import { IForm } from '../@types/date'
+import { InputChange } from '../@types/general'
 
 interface FormProps {
   setCalculatedDay: React.Dispatch<React.SetStateAction<number>>
@@ -12,9 +15,14 @@ export default function Form({
   setCalculatedMonth,
   setCalculatedYear,
 }: FormProps) {
-  const [userDay, setUserDay] = useState<number | ''>('')
-  const [userMonth, setUserMonth] = useState<number | ''>('')
-  const [userYear, setUserYear] = useState<number | ''>('')
+  const initialState = {
+    day: '',
+    month: '',
+    year: '',
+    required: '',
+  }
+
+  const [formData, setFormData] = useState<IForm>(initialState)
   const [errorMessage, setErrorMessage] = useState({
     day: '',
     month: '',
@@ -22,53 +30,53 @@ export default function Form({
     required: '',
   })
 
+  const dayInputRef = useRef<HTMLInputElement>(null)
   const currentYear = new Date().getFullYear()
-  const isLeapYear = moment([userYear]).isLeapYear()
+  const isLeapYear = moment([formData.year]).isLeapYear()
 
-  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: InputChange) => {
     const { name, value } = e.target
+    const valueNumber = Number(value)
+
+    setFormData({ ...formData, [e.target.name]: e.target.value })
 
     if (name === 'day') {
-      const dayValue = Number(value)
-
-      setUserDay(dayValue)
-
-      if (dayValue > 31 || dayValue < 0) {
-        setErrorMessage({ ...errorMessage, day: 'Must be a valid day' })
+      if (valueNumber > 31 || valueNumber < 0) {
+        setErrorMessage({
+          ...errorMessage,
+          day: 'Must be a valid day',
+        })
         return
-      } else {
-        setErrorMessage({ ...errorMessage, day: '' })
       }
     }
 
     if (name === 'month') {
-      const monthValue = Number(value)
-
-      setUserMonth(monthValue)
-
-      if (monthValue > 12 || monthValue < 0) {
-        setErrorMessage({ ...errorMessage, month: 'Must be a valid month' })
+      if (valueNumber > 12 || valueNumber < 0) {
+        setErrorMessage({
+          ...errorMessage,
+          month: 'Must be a valid month',
+        })
         return
-      } else {
-        setErrorMessage({ ...errorMessage, month: '' })
       }
     }
 
     if (name === 'year') {
-      const yearValue = Number(value)
+      if (valueNumber < 0) {
+        setErrorMessage({
+          ...errorMessage,
+          year: 'Must be a valid year',
+        })
 
-      setUserYear(yearValue)
-
-      if (yearValue < 0) {
-        setErrorMessage({ ...errorMessage, year: 'Must be a valid year' })
         return
       }
 
-      if (yearValue > currentYear) {
-        setErrorMessage({ ...errorMessage, year: 'Must be in the past' })
+      if (valueNumber > currentYear) {
+        setErrorMessage({
+          ...errorMessage,
+          year: 'Must be in the past',
+        })
+
         return
-      } else {
-        setErrorMessage({ ...errorMessage, year: '' })
       }
     }
 
@@ -78,7 +86,13 @@ export default function Form({
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    if (userDay === '' || userMonth === '' || userYear === '') {
+    const { day, month, year } = formData
+
+    const userDate = moment(`${year}-${month}-${day}`)
+    const currentDate = moment(new Date(), 'YYYY-MM-DD')
+    const isValidDate = moment(userDate.format('YYYY-MM-DD')).isValid()
+
+    if (day === '' || month === '' || year === '') {
       setErrorMessage({ ...errorMessage, required: 'This field is required' })
       return
     }
@@ -87,18 +101,24 @@ export default function Form({
       return
     }
 
-    if (!isLeapYear && userMonth === 2 && userDay > 28) {
+    if (!isLeapYear && Number(month) === 2 && Number(day) > 28) {
+      setErrorMessage({
+        ...errorMessage,
+        day: 'Must be a valid day',
+        required: ' ',
+      })
+      return
+    }
+
+    if (isLeapYear && Number(month) === 2 && Number(day) > 29) {
       setErrorMessage({ ...errorMessage, day: 'Must be a valid day' })
       return
     }
 
-    if (isLeapYear && userMonth === 2 && userDay > 29) {
+    if (!isValidDate) {
       setErrorMessage({ ...errorMessage, day: 'Must be a valid day' })
       return
     }
-
-    const userDate = moment(`${userYear}-${userMonth}-${userDay}`)
-    const currentDate = moment(new Date(), 'YYYY-MM-DD')
 
     const yearsDiff = currentDate.diff(userDate, 'years')
     const lastBirthday = userDate.clone().add(yearsDiff, 'years')
@@ -114,9 +134,7 @@ export default function Form({
     setCalculatedDay(daysDiff)
 
     // Resetting form inputs
-    setUserDay('')
-    setUserMonth('')
-    setUserYear('')
+    setFormData(initialState)
     setErrorMessage({
       ...errorMessage,
       day: '',
@@ -124,6 +142,10 @@ export default function Form({
       year: '',
       required: '',
     })
+
+    if (dayInputRef.current) {
+      dayInputRef.current.focus()
+    }
   }
 
   return (
@@ -141,12 +163,13 @@ export default function Form({
           className={`${
             errorMessage.day || errorMessage.required ? 'border-erro' : null
           } form__input`}
-          type="text"
-          placeholder="DD"
-          id="day"
+          type="number"
           name="day"
-          value={userDay === 0 ? '' : userDay}
-          onChange={(e) => handleInput(e)}
+          id="day"
+          onChange={handleInputChange}
+          value={formData.day}
+          placeholder="DD"
+          ref={dayInputRef}
         />
 
         <span className="form__span__erro">
@@ -168,11 +191,11 @@ export default function Form({
             errorMessage.month || errorMessage.required ? 'border-erro' : null
           } form__input`}
           type="number"
-          placeholder="MM"
-          id="month"
           name="month"
-          value={userMonth === 0 ? '' : userMonth}
-          onChange={(e) => handleInput(e)}
+          id="month"
+          onChange={handleInputChange}
+          value={formData.month}
+          placeholder="MM"
         />
 
         <span className="form__span__erro">
@@ -194,11 +217,11 @@ export default function Form({
             errorMessage.year || errorMessage.required ? 'border-erro' : null
           } form__input`}
           type="number"
-          placeholder="YYYY"
-          id="year"
           name="year"
-          value={userYear === 0 ? '' : userYear}
-          onChange={(e) => handleInput(e)}
+          id="year"
+          onChange={handleInputChange}
+          value={formData.year}
+          placeholder="YYYY"
         />
 
         <span className="form__span__erro">
